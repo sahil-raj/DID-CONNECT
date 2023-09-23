@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DID // CONNECT-Mobile</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous"/>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<body>
+    <h1 id="boom-boom">DID // CONNECT</h1>
+      <div id="boom-one"class="my-boom card text-center mb-3" style="width: 18rem;">
+        <div class="card-body">
+          <h5 class="card-title">Connect to your desktop</h5>
+          <p class="card-text">Enter the code shown on your desktop screen to connect.</p>
+          <form action="#" id="my-form">
+            <div class="input-group mb-3">
+                <input type="text" class="form-control" placeholder="code" aria-label="Username" id="my-in" required="true" aria-describedby="basic-addon1">
+                <input type="submit" class="btn btn-outline-secondary" style="background-color: #0d6efd;color: white !important;" id="my-btn"></input>
+              </div>
+          </form>
+        </div>
+      </div>
+      <div id="boom-two" class="my-boom card text-center mb-3" style="width: 18rem;">
+        <div class="card-body">
+          <h5 class="card-title">Connected Successfully</h5>
+          <p style="padding-top: 5%;" id="test" class="card-text">Move your device UP / DOWN to play.</p>
+        </div>
+      </div>
+    <style>
+        body {
+            background-color: #000;
+            overflow-x: hidden !important;
+        }
+
+        .my-boom {
+            margin: auto;
+            width: 50%;
+            margin-top: 25vh;
+        }
+
+        #boom-boom {
+            color: white;
+            padding-top: 10vh;
+            text-align: center;
+            word-wrap: break-word;
+            font-size: 7vh;
+            font-weight: bolder;
+        }
+
+        #boom-two {
+            display: none;
+        }
+    </style>
+    <script>
+
+        var socket = io();
+        var myBtn = document.getElementById("my-form");
+        var myField = document.getElementById("my-in");
+        var myKey = 1991;
+
+        function accMeterData() {
+            function motionHandle(e) {
+                var myData = {
+                    // x: e.acceleration.x,
+                    // y: e.acceleration.y,
+                    // z: e.acceleration.z
+                    x: e.alpha,
+                    y: e.beta,
+                    z: e.gamma
+                }
+                setInterval(() => {
+                    socket.emit("sensorData", myData);
+                },100);
+            }
+
+            window.addEventListener("deviceorientation", motionHandle, true);
+        }
+
+        function accDataHandle() {
+            if (window.DeviceMotionEvent != undefined) {
+                accMeterData();
+            } else {
+                alert("Sorry your Device is not supported.")
+            }
+        }
+
+        function connDone() {
+            myField.value = "";
+            document.getElementById("boom-two").style.display = "block";
+            document.getElementById("boom-one").style.display = "none";
+            accDataHandle();
+        }
+
+        function connectDesktop(x) {
+            let myPromise = new Promise((resolve, reject) => {
+                socket.emit("connectDesktop",{key:x});
+                socket.once("connectDesktopStatus", (e) => {
+                    resolve(e);
+                });
+            });
+
+            myPromise.then((e) => {
+                if(e.status == true) {
+                    connDone();
+                } else {
+                    alert("Connection failed unexpectedly, try checking your code.");
+                }
+            });
+        }
+
+        myBtn.addEventListener("submit", (e) => {
+            e.preventDefault();
+            connectDesktop(myField.value);
+        });
+
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe" crossorigin="anonymous"></script>
+</body>
+</html>
